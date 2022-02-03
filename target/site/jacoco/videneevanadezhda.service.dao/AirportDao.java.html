@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AirportDao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.dao</a> &gt; <span class="el_source">AirportDao.java</span></div><h1>AirportDao.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.dao;
+
+import videneevanadezhda.service.db.SimpleJdbcTemplate;
+import lombok.AllArgsConstructor;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
+<span class="fc" id="L10">@AllArgsConstructor</span>
+public class AirportDao {
+    private final SimpleJdbcTemplate source;
+
+    /**
+     * 1. Вывести города, в которых несколько аэропортов.
+     *
+     * @return
+     * @throws SQLException
+     */
+    public Set&lt;String&gt; getCitiesWithSeveralAirports() throws SQLException {
+<span class="fc" id="L21">        Set&lt;String&gt; cities = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L23">        String sql = &quot;select city from airports &quot;</span>
+                + &quot;group by city having count(airport_code)&gt;1&quot;;
+<span class="fc" id="L25">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L26">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L28">                cities.add(resultSet.getString(&quot;city&quot;));</span>
+            }
+<span class="fc" id="L30">        });</span>
+<span class="fc" id="L31">        return cities;</span>
+    }
+
+    /**
+     * Для задачи В.1
+     * @param city
+     * @return
+     * @throws SQLException
+     */
+    public Set&lt;String&gt; getAirportsByCity(String city) throws SQLException {
+<span class="fc" id="L41">        Set&lt;String&gt; airports = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L43">        String sql = &quot;select airport_code from airports &quot;</span>
+                + &quot;where city=\'&quot; + city + &quot;\';&quot;;
+<span class="fc" id="L45">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L46">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L48">                airports.add(resultSet.getString(&quot;airport_code&quot;));</span>
+            }
+<span class="fc" id="L50">        });</span>
+<span class="fc" id="L51">        return airports;</span>
+    }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// These functions are not used in task
+// ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * For testing purposes
+     *
+     * @return
+     * @throws SQLException
+     */
+    public Set&lt;String&gt; getCities() throws SQLException {
+<span class="nc" id="L66">        Set&lt;String&gt; cities = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L68">        String sql = &quot;select city from airports&quot;;</span>
+<span class="nc" id="L69">        source.statement(stmt -&gt; {</span>
+<span class="nc" id="L70">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            while (resultSet.next()) {</span>
+<span class="nc" id="L72">                cities.add(resultSet.getString(&quot;city&quot;));</span>
+            }
+<span class="nc" id="L74">        });</span>
+<span class="nc" id="L75">        return cities;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

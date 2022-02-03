@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Charts.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.dao</a> &gt; <span class="el_source">Charts.java</span></div><h1>Charts.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.dao;
+
+import org.javatuples.Pair;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
+
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+<span class="fc" id="L22">public class Charts {</span>
+    private static final int CHART_WIDTH = 2000;
+    private static final int CHART_HEIGHT = 1200;
+
+    private CategoryDataset createDataset(ArrayList&lt;Pair&lt;String, Integer&gt;&gt; data1,
+                                          ArrayList&lt;Pair&lt;String, Integer&gt;&gt; data2,
+                                          String rowKey1, String rowKey2) {
+<span class="fc" id="L29">        var dataset = new DefaultCategoryDataset();</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        for (Pair&lt;String, Integer&gt; val : data1) {</span>
+<span class="fc" id="L31">            dataset.setValue(val.getValue1(), rowKey1, val.getValue0());</span>
+<span class="fc" id="L32">        }</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        if (!data2.isEmpty()) {</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">            for (Pair&lt;String, Integer&gt; val : data2) {</span>
+<span class="fc" id="L35">                dataset.setValue(val.getValue1(), rowKey2, val.getValue0());</span>
+<span class="fc" id="L36">            }</span>
+        }
+<span class="fc" id="L38">        return dataset;</span>
+    }
+
+    /**
+     * creates bar chart
+     *
+     * @param data1,    data2  arrays with data to illustrate
+     * @param valueAxis name of vertical axis
+     * @param fileName
+     * @throws IOException
+     */
+    public void createChart(ArrayList&lt;Pair&lt;String, Integer&gt;&gt; data1, ArrayList&lt;Pair&lt;String, Integer&gt;&gt; data2,
+                            String title, String categoryAxis, String valueAxis, String fileName,
+                            ArrayList&lt;String&gt; rowKey) throws IOException {
+<span class="fc" id="L52">        CategoryDataset dataset = createDataset(data1, data2, rowKey.get(0), rowKey.get(1));</span>
+
+<span class="fc" id="L54">        JFreeChart barChart = ChartFactory.createBarChart3D(title, categoryAxis, valueAxis, dataset,</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                PlotOrientation.VERTICAL, !data2.isEmpty(), false, false);</span>
+
+        // chart outlook
+<span class="fc" id="L58">        CategoryPlot plot = barChart.getCategoryPlot();</span>
+<span class="fc" id="L59">        CategoryAxis axis = plot.getDomainAxis();</span>
+
+<span class="fc" id="L61">        final int fontSize30 = 30;</span>
+<span class="fc" id="L62">        final int fontSize35 = 35;</span>
+<span class="fc" id="L63">        final int fontSize40 = 40;</span>
+<span class="fc" id="L64">        Font font = new Font(&quot;Cambria&quot;, Font.BOLD, fontSize30);</span>
+<span class="fc" id="L65">        axis.setTickLabelFont(font);</span>
+<span class="fc" id="L66">        Font font3 = new Font(&quot;Cambria&quot;, Font.BOLD, fontSize35);</span>
+<span class="fc" id="L67">        barChart.setTitle(new org.jfree.chart.title.TextTitle(title,</span>
+                new java.awt.Font(&quot;Cambria&quot;, java.awt.Font.BOLD, fontSize40)));
+
+<span class="fc" id="L70">        plot.getDomainAxis().setLabelFont(font3);</span>
+<span class="fc" id="L71">        plot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_45);</span>
+<span class="fc" id="L72">        plot.getRangeAxis().setLabelFont(font3);</span>
+<span class="fc" id="L73">        CategoryPlot categoryPlot = (CategoryPlot) barChart.getPlot();</span>
+<span class="fc" id="L74">        BarRenderer renderer = (BarRenderer) categoryPlot.getRenderer();</span>
+<span class="fc" id="L75">        renderer.setBarPainter(new StandardBarPainter());</span>
+<span class="fc" id="L76">        renderer.setBaseLegendShape(new Rectangle(fontSize30, fontSize30));</span>
+<span class="fc" id="L77">        renderer.setBaseLegendTextFont(new Font(&quot;Helvetica&quot;, Font.ITALIC, fontSize40));</span>
+
+
+<span class="fc" id="L80">        File file = new File(fileName + &quot;.png&quot;);</span>
+<span class="fc" id="L81">        file.createNewFile();</span>
+<span class="fc" id="L82">        ChartUtilities.saveChartAsPNG(file, barChart, CHART_WIDTH, CHART_HEIGHT);</span>
+<span class="fc" id="L83">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

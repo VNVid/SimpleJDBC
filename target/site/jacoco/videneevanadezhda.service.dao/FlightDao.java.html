@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FlightDao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.dao</a> &gt; <span class="el_source">FlightDao.java</span></div><h1>FlightDao.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.dao;
+
+import org.javatuples.Pair;
+import videneevanadezhda.domain.CityInfo;
+import videneevanadezhda.domain.Flight;
+import videneevanadezhda.service.db.SimpleJdbcTemplate;
+import lombok.AllArgsConstructor;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.HashSet;
+
+
+<span class="fc" id="L20">@AllArgsConstructor</span>
+public class FlightDao {
+    private final SimpleJdbcTemplate source;
+
+    /**
+     * 2. Вывести города, из которых чаще всего отменяли рейсы.
+     *
+     * @return
+     * @throws SQLException
+     */
+    public ArrayList&lt;Pair&lt;String, Integer&gt;&gt; getCitiesMostFrequentCancelledFlights() throws SQLException {
+<span class="fc" id="L31">        ArrayList&lt;Pair&lt;String, Integer&gt;&gt; cities = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L33">        String sql = &quot;select airports.city, count(flights.status) as cancelled_number &quot;</span>
+                + &quot;from flights &quot;
+                + &quot;inner join airports on flights.departure_airport=airports.airport_code &quot;
+                + &quot;where flights.status='Cancelled' &quot;
+                + &quot;group by airports.city&quot;;
+<span class="fc" id="L38">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L39">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L41">                cities.add(new Pair&lt;&gt;(resultSet.getString(&quot;city&quot;), resultSet.getInt(&quot;cancelled_number&quot;)));</span>
+            }
+<span class="fc" id="L43">        });</span>
+
+<span class="fc" id="L45">        Collections.sort(cities, Comparator.comparing(p -&gt; -p.getValue1()));</span>
+<span class="fc" id="L46">        return cities;</span>
+    }
+
+
+    /**
+     * 3. В каждом городе вылета найти самый короткий маршрут. Отсортировать по продолжительности.
+     *
+     * @return
+     * @throws SQLException
+     */
+    public Set&lt;Flight&gt; getShortestTimeForCity() throws SQLException {
+<span class="fc" id="L57">        Set&lt;Flight&gt; flights = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L59">        String sqlInner = &quot;create table table_mean as (select flights.arrival_airport as aa, &quot;</span>
+                + &quot;flights.departure_airport as da, &quot;
+                + &quot;avg(extract (day    from (flights.scheduled_arrival-flights.scheduled_departure))*24*60*60+ &quot;
+                + &quot;extract (hour   from (flights.scheduled_arrival-flights.scheduled_departure))*60*60+&quot;
+                + &quot;extract (minute from (flights.scheduled_arrival-flights.scheduled_departure))*60+&quot;
+                + &quot;extract (second from (flights.scheduled_arrival-flights.scheduled_departure))) as mean_time, &quot;
+                + &quot;airports.city as city &quot;
+                + &quot;from flights inner join airports on airports.airport_code=flights.departure_airport &quot;
+                + &quot;where (flights.scheduled_arrival is not null) and (flights.scheduled_departure is not null) &quot;
+                + &quot;group by flights.flight_no);&quot;;
+<span class="fc" id="L69">        String sql = &quot;select airports.city as city, &quot;</span>
+                + &quot;min(table_mean.mean_time) as time &quot;
+                + &quot;from airports &quot;
+                + &quot;inner join table_mean &quot;
+                + &quot;on table_mean.da=airports.airport_code &quot;
+                + &quot;group by airports.city&quot;;
+<span class="fc" id="L75">        String sqlOuter = &quot;select distinct table_final.city, table_mean.aa, table_final.time from &quot;</span>
+                + &quot;(&quot; + sql + &quot;) as table_final &quot;
+                + &quot;inner join table_mean on table_mean.city=table_final.city &quot;
+                + &quot;and table_mean.mean_time=table_final.time;&quot;;
+
+<span class="fc" id="L80">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L81">            stmt.execute(sqlInner);</span>
+<span class="fc" id="L82">            ResultSet resultSet = stmt.executeQuery(sqlOuter);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L84">                flights.add(new Flight(resultSet.getString(1),</span>
+<span class="fc" id="L85">                        resultSet.getString(2), resultSet.getString(3)));</span>
+            }
+<span class="fc" id="L87">        });</span>
+
+<span class="fc" id="L89">        return flights;</span>
+    }
+
+    /**
+     * 4. Найти кол-во отмен рейсов по месяцам.
+     *
+     * @return
+     * @throws SQLException
+     */
+    public ArrayList&lt;Pair&lt;String, Integer&gt;&gt; getNumberCancelled() throws SQLException {
+<span class="fc" id="L99">        ArrayList&lt;Pair&lt;String, Integer&gt;&gt; month = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L101">        String sql = &quot;select monthname(flights.scheduled_departure) as month, count(status) as num &quot;</span>
+                + &quot;from flights where status=\'Cancelled\' &quot;
+                + &quot;group by month;&quot;;
+<span class="fc" id="L104">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L105">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L107">                month.add(new Pair&lt;String, Integer&gt;(resultSet.getString(&quot;month&quot;), resultSet.getInt(&quot;num&quot;)));</span>
+            }
+<span class="fc" id="L109">        });</span>
+<span class="fc" id="L110">        return month;</span>
+    }
+
+    /**
+     * 5. Выведите кол-во рейсов в Москву и из Москвы по дням недели за весь наблюдаемый период.
+     *
+     * @return
+     * @throws SQLException
+     */
+    public ArrayList&lt;CityInfo&gt; getInfoForMoscow() throws SQLException {
+<span class="fc" id="L120">        ArrayList&lt;CityInfo&gt; ans = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L122">        String sql1 = &quot;create table arrived as (select dayname(flights.scheduled_arrival) as day, &quot;</span>
+                + &quot;count(flights.flight_id) as num &quot;
+                + &quot;from flights &quot;
+                + &quot;inner join airports on airports.airport_code=flights.arrival_airport &quot;
+                + &quot;where status=\'Arrived\' and airports.city=\'Moscow\' &quot;
+                + &quot;group by day);&quot;;
+<span class="fc" id="L128">        String sql2 = &quot;select departure.day as day, departure.num as num_dep, arrived.num as num_arr &quot;</span>
+                + &quot;from (select dayname(flights.scheduled_departure) as day, &quot;
+                + &quot;count(flights.flight_id) as num &quot;
+                + &quot;from flights &quot;
+                + &quot;inner join airports on airports.airport_code=flights.departure_airport &quot;
+                + &quot;where status=\'Arrived\' and airports.city=\'Moscow\' &quot;
+                + &quot;group by day) as departure &quot;
+                + &quot;inner join arrived on arrived.day=departure.day;&quot;;
+<span class="fc" id="L136">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L137">            stmt.execute(sql1);</span>
+<span class="fc" id="L138">            ResultSet resultSet = stmt.executeQuery(sql2);</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L140">                ans.add(new CityInfo(&quot;Moscow&quot;, resultSet.getString(&quot;day&quot;),</span>
+<span class="fc" id="L141">                        resultSet.getInt(&quot;num_arr&quot;), resultSet.getInt(&quot;num_dep&quot;)));</span>
+            }
+<span class="fc" id="L143">        });</span>
+<span class="fc" id="L144">        return ans;</span>
+    }
+
+
+    /**
+     * 6. Отменить все рейсы самолета, заданной модели
+     *
+     * @param model
+     * @throws SQLException
+     */
+    public void updateStatusByAircraftModel(String model, TicketDao ticketDaoInstance) throws SQLException {
+<span class="fc" id="L155">        String sql = &quot;update flights set status = 'Cancelled' &quot;</span>
+                + &quot;where flights.status in (\'Scheduled\', \'On Time\', \'Delayed\') and &quot;
+                + &quot;aircraft_code in (select aircraft_code &quot;
+                + &quot;from aircrafts where model = ?);&quot;;
+<span class="fc" id="L159">        source.preparedStatement(sql, stmt -&gt; {</span>
+<span class="fc" id="L160">            stmt.setString(1, model);</span>
+<span class="fc" id="L161">            stmt.executeUpdate();</span>
+<span class="fc" id="L162">        });</span>
+<span class="fc" id="L163">        ticketDaoInstance.deleteCancelledTickets();</span>
+<span class="fc" id="L164">    }</span>
+
+
+    /**
+     * 7. В связи с пандемией COVID-2017 все рейсы, прибывающие в Москву и отбывающие из неё,
+     * запланированные на даты в интервале, заданном параметром (например,  [01.08.17, 15.08.17]), были отменены.
+     * Перевести соответствующие рейсы в Cancelled, а также посчитать убыток,
+     * который теряют компании-перевозчики по дням.
+     *
+     * @param begin
+     * @param end
+     * @throws SQLException
+     */
+    public ArrayList&lt;Pair&lt;String, Integer&gt;&gt; updateStatusBetweenDatesAndCountLosses(String begin, String end)
+            throws SQLException, ParseException {
+<span class="fc" id="L179">        String findID = &quot;select flight_id &quot;</span>
+                + &quot;from flights inner join airports as arr &quot;
+                + &quot;on arr.airport_code=flights.arrival_airport &quot;
+                + &quot;inner join airports as dep &quot;
+                + &quot;on dep.airport_code=flights.departure_airport &quot;
+                + &quot;where (dep.city=\'Moscow\' or arr.city=\'Moscow\') and &quot;
+                + &quot;((scheduled_departure between ? and ?) or (scheduled_arrival between ? and ?));&quot;;
+<span class="fc" id="L186">        String flightIDs = source.preparedStatement(findID, stmt -&gt; {</span>
+<span class="fc" id="L187">            stmt.setString(1, begin);</span>
+<span class="fc" id="L188">            stmt.setString(2, end);</span>
+<span class="fc" id="L189">            stmt.setString(3, begin);</span>
+<span class="fc" id="L190">            stmt.setString(4, end);</span>
+<span class="fc" id="L191">            ResultSet resultSet = stmt.executeQuery();</span>
+<span class="fc" id="L192">            String res = &quot;&quot;;</span>
+<span class="fc bfc" id="L193" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L194">                res += resultSet.getString(&quot;flight_id&quot;) + &quot;, &quot;;</span>
+            }
+<span class="fc" id="L196">            return res.substring(0, res.length() - 2);</span>
+        });
+
+<span class="fc" id="L199">        String sql = &quot;update flights set status = 'Cancelled' &quot;</span>
+                + &quot;where flight_id in (&quot; + flightIDs + &quot;);&quot;;
+<span class="fc" id="L201">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L202">            stmt.execute(sql);</span>
+<span class="fc" id="L203">        });</span>
+
+<span class="fc" id="L205">        String countLoss = &quot;select day(scheduled_arrival) as day, sum(ticket_flights.amount) as sum &quot;</span>
+                + &quot;from ticket_flights inner join flights on ticket_flights.flight_id = flights.flight_id &quot;
+                + &quot;where ticket_flights.flight_id in (&quot; + flightIDs + &quot;) &quot;
+                + &quot;group by day(scheduled_arrival);&quot;;
+<span class="fc" id="L209">        return source.statement(stmt -&gt; {</span>
+<span class="fc" id="L210">            ResultSet resultSet = stmt.executeQuery(countLoss);</span>
+<span class="fc" id="L211">            ArrayList&lt;Pair&lt;String, Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L213">                res.add(new Pair&lt;&gt;(resultSet.getString(&quot;day&quot;), resultSet.getInt(&quot;sum&quot;)));</span>
+            }
+<span class="fc" id="L215">            return res;</span>
+        });
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// These functions are not used in task
+// ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * For testing purposes.  SKIP WHEN CHECKING
+     *
+     * @return
+     * @throws SQLException
+     */
+    public ArrayList&lt;Timestamp&gt; getTime() throws SQLException {
+<span class="nc" id="L230">        ArrayList&lt;Timestamp&gt; cities = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L232">        String sql = &quot;select scheduled_departure from flights;&quot;;</span>
+<span class="nc" id="L233">        source.statement(stmt -&gt; {</span>
+<span class="nc" id="L234">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">            while (resultSet.next()) {</span>
+<span class="nc" id="L236">                cities.add(resultSet.getTimestamp(&quot;scheduled_departure&quot;));</span>
+            }
+<span class="nc" id="L238">        });</span>
+<span class="nc" id="L239">        return cities;</span>
+    }
+
+    /**
+     * For testing purposes.  SKIP WHEN CHECKING
+     *
+     * @return
+     * @throws SQLException
+     */
+    public ArrayList&lt;Pair&lt;String, Integer&gt;&gt; getFLightNo() throws SQLException {
+<span class="nc" id="L249">        ArrayList&lt;Pair&lt;String, Integer&gt;&gt; cities = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L251">        String sql = &quot;select flight_no, count(flight_id) as num &quot;</span>
+                + &quot;from flights group by flight_no;&quot;;
+<span class="nc" id="L253">        source.statement(stmt -&gt; {</span>
+<span class="nc" id="L254">            ResultSet resultSet = stmt.executeQuery(sql);</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">            while (resultSet.next()) {</span>
+<span class="nc" id="L256">                cities.add(new Pair&lt;String, Integer&gt;(resultSet.getString(&quot;flight_no&quot;), resultSet.getInt(&quot;num&quot;)));</span>
+            }
+<span class="nc" id="L258">        });</span>
+<span class="nc" id="L259">        return cities;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

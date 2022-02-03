@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TicketDao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.dao</a> &gt; <span class="el_source">TicketDao.java</span></div><h1>TicketDao.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.dao;
+
+import videneevanadezhda.service.db.SimpleJdbcTemplate;
+import lombok.AllArgsConstructor;
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+
+
+<span class="fc" id="L11">@AllArgsConstructor</span>
+public class TicketDao {
+    private final SimpleJdbcTemplate source;
+
+    /**
+     * 6. Все билеты, относящиеся к удаленным рейсам - удалить.
+     *
+     * @throws SQLException
+     */
+    public void deleteCancelledTickets() throws SQLException {
+<span class="fc" id="L21">        String sql1 = &quot;delete tickets where ticket_no in &quot;</span>
+                + &quot;(select ticket_no from ticket_flights &quot;
+                + &quot;where flight_id in (select flight_id from flights &quot;
+                + &quot;where status=\'Cancelled\'));&quot;;
+<span class="fc" id="L25">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L26">            stmt.execute(sql1);</span>
+<span class="fc" id="L27">        });</span>
+
+<span class="fc" id="L29">        String sql2 = &quot;delete ticket_flights &quot;</span>
+                + &quot;where flight_id in (select flight_id from flights &quot;
+                + &quot;where status=\'Cancelled\');&quot;;
+<span class="fc" id="L32">        source.statement(stmt -&gt; {</span>
+<span class="fc" id="L33">            stmt.execute(sql2);</span>
+<span class="fc" id="L34">        });</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * 8. Написать запрос на добавление нового билета.
+     * При указании рейса и места в самолёте делать проверку, что соответствующие рейс и место существуют.
+     *
+     * @param ticketNo
+     * @param flightId
+     * @param boardingNo
+     * @param seatNo
+     * @throws SQLException
+     * @throws ParseException
+     * @throws IOException
+     */
+    public void addNewBoardingPass(Integer ticketNo, Integer flightId, Integer boardingNo, String seatNo)
+            throws SQLException, ParseException, IOException {
+<span class="fc" id="L51">        String checkFLightId = &quot;select exists(select *  from flights where flight_id = ? );&quot;;</span>
+<span class="fc" id="L52">        boolean existsFlightId = source.preparedStatement(checkFLightId, stmt -&gt; {</span>
+<span class="fc" id="L53">            stmt.setInt(1, flightId);</span>
+<span class="fc" id="L54">            ResultSet resultSet = stmt.executeQuery();</span>
+<span class="fc" id="L55">            resultSet.next();</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            return resultSet.getInt(1) == 1;</span>
+        });
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if (!existsFlightId) {</span>
+<span class="nc" id="L59">            System.out.println(&quot;ERROR: flight_id not found&quot;);</span>
+<span class="nc" id="L60">            return;</span>
+        }
+
+<span class="fc" id="L63">        String sql = &quot;select aircraft_code from flights where flight_id = ?;&quot;;</span>
+<span class="fc" id="L64">        String aircraftCode = source.preparedStatement(sql, stmt -&gt; {</span>
+<span class="fc" id="L65">            stmt.setInt(1, flightId);</span>
+<span class="fc" id="L66">            ResultSet resultSet = stmt.executeQuery();</span>
+<span class="fc" id="L67">            resultSet.next();</span>
+<span class="fc" id="L68">            return resultSet.getString(1);</span>
+        });
+
+<span class="fc" id="L71">        String checkSeatNo = &quot;select exists(select *  from seats where aircraft_code = ?);&quot;;</span>
+<span class="fc" id="L72">        boolean existsSeatNo = source.preparedStatement(checkSeatNo, stmt -&gt; {</span>
+<span class="fc" id="L73">            stmt.setString(1, aircraftCode);</span>
+<span class="fc" id="L74">            ResultSet resultSet = stmt.executeQuery();</span>
+<span class="fc" id="L75">            resultSet.next();</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">            return resultSet.getInt(1) == 1;</span>
+        });
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (!existsSeatNo) {</span>
+<span class="nc" id="L79">            System.out.println(&quot;ERROR: seat_no not found&quot;);</span>
+<span class="nc" id="L80">            return;</span>
+        }
+
+<span class="fc" id="L83">        String sql1 = &quot;insert into boarding_passes values (?, ?, ?, ?);&quot;;</span>
+<span class="fc" id="L84">        source.preparedStatement(sql1, stmt -&gt; {</span>
+<span class="fc" id="L85">            stmt.setInt(1, ticketNo);</span>
+<span class="fc" id="L86">            stmt.setInt(2, flightId);</span>
+<span class="fc" id="L87">            stmt.setInt(3, boardingNo);</span>
+<span class="fc" id="L88">            stmt.setString(4, seatNo);</span>
+<span class="fc" id="L89">            stmt.execute();</span>
+<span class="fc" id="L90">        });</span>
+<span class="fc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

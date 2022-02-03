@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+homework3,videneevanadezhda,App,1,0,0,0,1,0,1,0,1,0
+homework3,videneevanadezhda.service.dao,Tables,19,259,4,16,2,49,3,10,0,3
+homework3,videneevanadezhda.service.dao,TicketDao,10,156,4,4,4,39,4,9,0,9
+homework3,videneevanadezhda.service.dao,AirportDao,29,65,2,4,8,17,3,7,2,5
+homework3,videneevanadezhda.service.dao,FlightDao,65,302,4,12,16,70,6,22,4,16
+homework3,videneevanadezhda.service.dao,Charts,0,176,0,8,0,34,0,7,0,3
+homework3,videneevanadezhda.domain,CityInfo,149,24,26,0,2,4,22,4,9,4
+homework3,videneevanadezhda.domain,Flight,101,63,27,3,0,5,21,5,6,5
+homework3,videneevanadezhda.service.db,DbInit,0,41,0,0,0,9,0,4,0,4
+homework3,videneevanadezhda.service.db,SimpleJdbcTemplate,0,98,0,0,0,28,0,11,0,11
+homework3,videneevanadezhda.service.db,DbFill,0,595,0,20,0,139,0,27,0,17

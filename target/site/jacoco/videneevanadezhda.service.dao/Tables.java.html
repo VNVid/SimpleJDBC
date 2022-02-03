@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Tables.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.dao</a> &gt; <span class="el_source">Tables.java</span></div><h1>Tables.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.dao;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.javatuples.Pair;
+
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+
+<span class="fc" id="L20">public class Tables {</span>
+    /**
+     * Creates table, values given as pairs
+     *
+     * @param value       data to fill in the table
+     * @param fileName
+     * @param columnNames
+     * @throws IOException
+     */
+    public &lt;T, S&gt; void createTableFromPair(ArrayList&lt;Pair&lt;T, S&gt;&gt; value,
+                                           String fileName, ArrayList&lt;String&gt; columnNames)
+            throws IOException {
+<span class="fc" id="L32">        try (XSSFWorkbook table = new XSSFWorkbook()) {</span>
+<span class="fc" id="L33">            XSSFSheet sheetExcel = table.createSheet(fileName);</span>
+
+<span class="fc" id="L35">            CellStyle style = table.createCellStyle();</span>
+<span class="fc" id="L36">            Font font = table.createFont();</span>
+<span class="fc" id="L37">            font.setBold(true);</span>
+<span class="fc" id="L38">            style.setFont(font);</span>
+<span class="fc" id="L39">            style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());</span>
+<span class="fc" id="L40">            style.setLocked(true);</span>
+
+<span class="fc" id="L42">            XSSFRow firstRow = sheetExcel.createRow(0);</span>
+<span class="fc" id="L43">            Cell currentCell = firstRow.createCell(0);</span>
+<span class="fc" id="L44">            currentCell.setCellValue(columnNames.get(0));</span>
+<span class="fc" id="L45">            currentCell.setCellStyle(style);</span>
+<span class="fc" id="L46">            currentCell = firstRow.createCell(1);</span>
+<span class="fc" id="L47">            currentCell.setCellValue(columnNames.get(1));</span>
+<span class="fc" id="L48">            currentCell.setCellStyle(style);</span>
+
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            for (int i = 0; i &lt; value.size(); ++i) {</span>
+<span class="fc" id="L51">                firstRow = sheetExcel.createRow(i + 1);</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                if (value.get(i).getValue0() instanceof String) {</span>
+<span class="fc" id="L53">                    firstRow.createCell(0).setCellValue((String) value.get(i).getValue0());</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">                } else if (value.get(i).getValue0() instanceof Integer) {</span>
+<span class="nc" id="L55">                    firstRow.createCell(0).setCellValue((Integer) value.get(i).getValue0());</span>
+                }
+<span class="fc bfc" id="L57" title="All 2 branches covered.">                if (value.get(i).getValue1() instanceof String) {</span>
+<span class="fc" id="L58">                    firstRow.createCell(1).setCellValue((String) value.get(i).getValue1());</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">                } else if (value.get(i).getValue1() instanceof Integer) {</span>
+<span class="fc" id="L60">                    firstRow.createCell(1).setCellValue((Integer) value.get(i).getValue1());</span>
+                }
+            }
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            for (int x = 0; x &lt; sheetExcel.getRow(0).getPhysicalNumberOfCells(); x++) {</span>
+<span class="fc" id="L65">                sheetExcel.autoSizeColumn(x);</span>
+            }
+
+<span class="fc" id="L68">            table.write(new FileOutputStream(fileName + &quot;.xlsx&quot;));</span>
+        }
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Creates table, values given as array of strings
+     *
+     * @param value       data to fill in the table
+     * @param fileName
+     * @param columnNames
+     * @throws IOException
+     */
+    public void createTableFromArray(ArrayList&lt;ArrayList&lt;String&gt;&gt; value,
+                                     String fileName, ArrayList&lt;String&gt; columnNames)
+            throws IOException {
+<span class="fc" id="L83">        try (XSSFWorkbook table = new XSSFWorkbook()) {</span>
+<span class="fc" id="L84">            XSSFSheet sheetExcel = table.createSheet(fileName);</span>
+
+<span class="fc" id="L86">            CellStyle style = table.createCellStyle();</span>
+<span class="fc" id="L87">            Font font = table.createFont();</span>
+<span class="fc" id="L88">            font.setBold(true);</span>
+<span class="fc" id="L89">            style.setFont(font);</span>
+<span class="fc" id="L90">            style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());</span>
+<span class="fc" id="L91">            style.setLocked(true);</span>
+
+<span class="fc" id="L93">            XSSFRow firstRow = sheetExcel.createRow(0);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">            for (int i = 0; i &lt; columnNames.size(); ++i) {</span>
+<span class="fc" id="L95">                Cell currentCell = firstRow.createCell(i);</span>
+<span class="fc" id="L96">                currentCell.setCellValue(columnNames.get(i));</span>
+<span class="fc" id="L97">                currentCell.setCellStyle(style);</span>
+            }
+
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            for (int i = 0; i &lt; value.size(); ++i) {</span>
+<span class="fc" id="L101">                Row row = sheetExcel.createRow(i + 1);</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">                for (int j = 0; j &lt; value.get(i).size(); ++j) {</span>
+<span class="fc" id="L103">                    row.createCell(j).setCellValue(value.get(i).get(j));</span>
+                }
+            }
+
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            for (int x = 0; x &lt; sheetExcel.getRow(0).getPhysicalNumberOfCells(); x++) {</span>
+<span class="fc" id="L108">                sheetExcel.autoSizeColumn(x);</span>
+            }
+
+<span class="fc" id="L111">            table.write(new FileOutputStream(fileName + &quot;.xlsx&quot;));</span>
+        }
+<span class="fc" id="L113">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

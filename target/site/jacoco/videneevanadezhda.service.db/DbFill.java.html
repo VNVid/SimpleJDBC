@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DbFill.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">homework3</a> &gt; <a href="index.source.html" class="el_package">videneevanadezhda.service.db</a> &gt; <span class="el_source">DbFill.java</span></div><h1>DbFill.java</h1><pre class="source lang-java linenums">package videneevanadezhda.service.db;
+
+import com.opencsv.exceptions.CsvValidationException;
+import lombok.AllArgsConstructor;
+import java.io.FileReader;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import com.opencsv.CSVReader;
+
+/**
+ * Fills database with data from csv files
+ */
+<span class="fc" id="L16">@AllArgsConstructor</span>
+public class DbFill {
+    private final SimpleJdbcTemplate source;
+
+    static final String INSERT_AIRCRAFT = &quot;INSERT INTO aircrafts(aircraft_code, model, range) VALUES (?, ?, ?)&quot;;
+    static final String INSERT_AIRPORT = &quot;INSERT INTO airports(airport_code, airport_name,&quot;
+            + &quot; city, coordinates, timezone) VALUES (?, ?, ?, ?, ?)&quot;;
+    static final String INSERT_BOARDING_PASS = &quot;INSERT INTO boarding_passes(ticket_no, flight_id,&quot;
+            + &quot; boarding_no, seat_no) VALUES (?, ?, ?, ?)&quot;;
+    static final String INSERT_BOOKING = &quot;INSERT INTO bookings(book_ref, book_date, total_amount) VALUES (?, ?, ?)&quot;;
+    static final String INSERT_FLIGHT = &quot;INSERT INTO flights(flight_id, flight_no, scheduled_departure,&quot;
+            + &quot; scheduled_arrival, departure_airport, arrival_airport, status, aircraft_code, &quot;
+            + &quot;actual_departure, actual_arrival) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)&quot;;
+    static final String INSERT_SEAT = &quot;INSERT INTO seats(aircraft_code, seat_no, fare_conditions) VALUES (?, ?, ?)&quot;;
+    static final String INSERT_TICKET_FLIGHTS = &quot;INSERT INTO ticket_flights(ticket_no, flight_id,&quot;
+            + &quot; fare_conditions, amount) VALUES (?, ?, ?, ?)&quot;;
+    static final String INSERT_TICKETS = &quot;INSERT INTO tickets(ticket_no, book_ref,&quot;
+            + &quot; passenger_id, passenger_name, contact_data) VALUES (?, ?, ?, ?, ?)&quot;;
+
+
+    /**
+     * Fills aircrafts table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillAircrafts() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L44">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/aircrafts_data.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L47">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L49">                    break;</span>
+                }
+<span class="fc" id="L51">                final int prefsize = 8;</span>
+<span class="fc" id="L52">                final int sufsize = 3;</span>
+<span class="fc" id="L53">                source.preparedStatement(INSERT_AIRCRAFT, insertAircraft -&gt; {</span>
+<span class="fc" id="L54">                    String regexp = &quot;\\{\&quot;en\&quot;: \&quot;.*\&quot;, &quot;;</span>
+<span class="fc" id="L55">                    Pattern pattern = Pattern.compile(regexp);</span>
+<span class="fc" id="L56">                    Matcher matcher = pattern.matcher(rec[1]);</span>
+<span class="fc" id="L57">                    matcher.find();</span>
+
+<span class="fc" id="L59">                    insertAircraft.setString(1, rec[0]);</span>
+<span class="fc" id="L60">                    insertAircraft.setString(2, rec[1].substring(matcher.start() + prefsize,</span>
+<span class="fc" id="L61">                            matcher.end() - sufsize));</span>
+<span class="fc" id="L62">                    insertAircraft.setInt(3, Integer.valueOf(rec[2]));</span>
+<span class="fc" id="L63">                    insertAircraft.execute();</span>
+<span class="fc" id="L64">                });</span>
+<span class="fc" id="L65">            }</span>
+        }
+<span class="fc" id="L67">    }</span>
+
+    /**
+     * Fills airports table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillAirports() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L77">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/airports_data.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L80">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L82">                    break;</span>
+                }
+<span class="fc" id="L84">                final int prefsize = 8;</span>
+<span class="fc" id="L85">                final int sufsize = 3;</span>
+<span class="fc" id="L86">                source.preparedStatement(INSERT_AIRPORT, insertAirport -&gt; {</span>
+<span class="fc" id="L87">                    String regexp = &quot;\\{\&quot;en\&quot;: \&quot;.*\&quot;, &quot;;</span>
+<span class="fc" id="L88">                    Pattern pattern = Pattern.compile(regexp);</span>
+<span class="fc" id="L89">                    Matcher matcher = pattern.matcher(rec[1]);</span>
+<span class="fc" id="L90">                    matcher.find();</span>
+
+<span class="fc" id="L92">                    insertAirport.setString(1, rec[0]);</span>
+<span class="fc" id="L93">                    insertAirport.setString(2, rec[1].substring(matcher.start() + prefsize,</span>
+<span class="fc" id="L94">                            matcher.end() - sufsize));</span>
+
+<span class="fc" id="L96">                    matcher = pattern.matcher(rec[2]);</span>
+<span class="fc" id="L97">                    matcher.find();</span>
+<span class="fc" id="L98">                    insertAirport.setString(3, rec[2].substring(matcher.start() + prefsize,</span>
+<span class="fc" id="L99">                            matcher.end() - sufsize));</span>
+<span class="fc" id="L100">                    insertAirport.setString(4, rec[3]);</span>
+<span class="fc" id="L101">                    insertAirport.setString(5, rec[4]);</span>
+<span class="fc" id="L102">                    insertAirport.execute();</span>
+<span class="fc" id="L103">                });</span>
+<span class="fc" id="L104">            }</span>
+        }
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Fills boarding_passes table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillBoardingPasses() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L116">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/boarding_passes.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L119">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L121">                    break;</span>
+                }
+
+<span class="fc" id="L124">                source.preparedStatement(INSERT_BOARDING_PASS, insertBoardingPass -&gt; {</span>
+<span class="fc" id="L125">                    insertBoardingPass.setString(1, rec[0]);</span>
+<span class="fc" id="L126">                    insertBoardingPass.setInt(2, Integer.valueOf(rec[1]));</span>
+<span class="fc" id="L127">                    insertBoardingPass.setInt(3, Integer.valueOf(rec[2]));</span>
+<span class="fc" id="L128">                    insertBoardingPass.setString(4, rec[3]);</span>
+<span class="fc" id="L129">                    insertBoardingPass.execute();</span>
+<span class="fc" id="L130">                });</span>
+<span class="fc" id="L131">            }</span>
+        }
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Fills bookings table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillBookings() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L143">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/bookings.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L146">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L148">                    break;</span>
+                }
+
+<span class="fc" id="L151">                final int timeZoneLen = 3;</span>
+
+<span class="fc" id="L153">                source.preparedStatement(INSERT_BOOKING, insertAircraft -&gt; {</span>
+<span class="fc" id="L154">                    insertAircraft.setString(1, rec[0]);</span>
+<span class="fc" id="L155">                    insertAircraft.setTimestamp(2,</span>
+<span class="fc" id="L156">                            Timestamp.valueOf(rec[1].substring(0, rec[1].length() - timeZoneLen)));</span>
+<span class="fc" id="L157">                    insertAircraft.setDouble(3, Double.valueOf(rec[2]));</span>
+<span class="fc" id="L158">                    insertAircraft.execute();</span>
+<span class="fc" id="L159">                });</span>
+<span class="fc" id="L160">            }</span>
+        }
+<span class="fc" id="L162">    }</span>
+
+    /**
+     * Fills flights table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillFlights() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L172">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/flights.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L175">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L177">                    break;</span>
+                }
+
+                // Just to avoid checkstyle violations
+<span class="fc" id="L181">                final int index8 = 8;</span>
+<span class="fc" id="L182">                final int index9 = 9;</span>
+<span class="fc" id="L183">                final int index10 = 10;</span>
+<span class="fc" id="L184">                final int timeZoneLen = 3;</span>
+
+<span class="fc" id="L186">                source.preparedStatement(INSERT_FLIGHT, insertFlight -&gt; {</span>
+<span class="fc" id="L187">                    insertFlight.setInt(1, Integer.valueOf(rec[0]));</span>
+<span class="fc" id="L188">                    insertFlight.setString(2, rec[1]);</span>
+<span class="fc" id="L189">                    insertFlight.setTimestamp(3, Timestamp.valueOf(rec[2].substring(0, rec[2].length() - timeZoneLen)));</span>
+<span class="fc" id="L190">                    insertFlight.setTimestamp(4, Timestamp.valueOf(rec[3].substring(0, rec[3].length() - timeZoneLen)));</span>
+<span class="fc" id="L191">                    insertFlight.setString(5, rec[4]);</span>
+<span class="fc" id="L192">                    insertFlight.setString(6, rec[5]);</span>
+<span class="fc" id="L193">                    insertFlight.setString(7, rec[6]);</span>
+<span class="fc" id="L194">                    insertFlight.setString(index8, rec[7]);</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">                    if (rec[index8].length() &gt; 0) {</span>
+<span class="fc" id="L196">                        insertFlight.setTimestamp(index9,</span>
+<span class="fc" id="L197">                                Timestamp.valueOf(rec[index8].substring(0, rec[index8].length() - timeZoneLen)));</span>
+                    } else {
+<span class="fc" id="L199">                        insertFlight.setTimestamp(index9, null);</span>
+                    }
+<span class="fc bfc" id="L201" title="All 2 branches covered.">                    if (rec[index9].length() &gt; 0) {</span>
+<span class="fc" id="L202">                        insertFlight.setTimestamp(index10,</span>
+<span class="fc" id="L203">                                Timestamp.valueOf(rec[index9].substring(0, rec[index9].length() - timeZoneLen)));</span>
+                    } else {
+<span class="fc" id="L205">                        insertFlight.setTimestamp(index10, null);</span>
+                    }
+<span class="fc" id="L207">                    insertFlight.execute();</span>
+<span class="fc" id="L208">                });</span>
+<span class="fc" id="L209">            }</span>
+        }
+<span class="fc" id="L211">    }</span>
+
+    /**
+     * Fills seats table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillSeats() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L221">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/seats.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L224">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L226">                    break;</span>
+                }
+
+<span class="fc" id="L229">                source.preparedStatement(INSERT_SEAT, insertSeat -&gt; {</span>
+<span class="fc" id="L230">                    insertSeat.setString(1, rec[0]);</span>
+<span class="fc" id="L231">                    insertSeat.setString(2, rec[1]);</span>
+<span class="fc" id="L232">                    insertSeat.setString(3, rec[2]);</span>
+<span class="fc" id="L233">                    insertSeat.execute();</span>
+<span class="fc" id="L234">                });</span>
+<span class="fc" id="L235">            }</span>
+        }
+<span class="fc" id="L237">    }</span>
+
+    /**
+     * Fills ticket_flights table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillTicketFlights() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L247">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/ticket_flights.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L250">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L252">                    break;</span>
+                }
+
+<span class="fc" id="L255">                source.preparedStatement(INSERT_TICKET_FLIGHTS, insertTicketFlights -&gt; {</span>
+<span class="fc" id="L256">                    insertTicketFlights.setString(1, rec[0]);</span>
+<span class="fc" id="L257">                    insertTicketFlights.setInt(2, Integer.parseInt(rec[1]));</span>
+<span class="fc" id="L258">                    insertTicketFlights.setString(3, rec[2]);</span>
+<span class="fc" id="L259">                    insertTicketFlights.setDouble(4, Double.parseDouble(rec[3]));</span>
+<span class="fc" id="L260">                    insertTicketFlights.execute();</span>
+<span class="fc" id="L261">                });</span>
+<span class="fc" id="L262">            }</span>
+        }
+<span class="fc" id="L264">    }</span>
+
+    /**
+     * Fills tickets table with data
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws CsvValidationException
+     */
+    public void fillTickets() throws SQLException, IOException, CsvValidationException {
+<span class="fc" id="L274">        try (CSVReader reader = new CSVReader(</span>
+                new FileReader(&quot;src/main/resources/videneevanadezhda/tickets.csv&quot;))) {
+            while (true) {
+<span class="fc" id="L277">                final String[] rec = reader.readNext();</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">                if (rec == null) {</span>
+<span class="fc" id="L279">                    break;</span>
+                }
+
+<span class="fc" id="L282">                source.preparedStatement(INSERT_TICKETS, insertTicket -&gt; {</span>
+<span class="fc" id="L283">                    insertTicket.setString(1, rec[0]);</span>
+<span class="fc" id="L284">                    insertTicket.setString(2, rec[1]);</span>
+<span class="fc" id="L285">                    insertTicket.setString(3, rec[2]);</span>
+<span class="fc" id="L286">                    insertTicket.setString(4, rec[3]);</span>
+<span class="fc" id="L287">                    insertTicket.setString(5, rec[4]);</span>
+<span class="fc" id="L288">                    insertTicket.execute();</span>
+<span class="fc" id="L289">                });</span>
+<span class="fc" id="L290">            }</span>
+        }
+<span class="fc" id="L292">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
